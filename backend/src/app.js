@@ -25,8 +25,8 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Stripe webhook needs raw body — register BEFORE json middleware
-app.use('/api/payments/webhook', require('./routes/payments'));
+// Stripe webhook needs raw body — must be registered BEFORE express.json()
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 // JSON body parsing for all other routes
 app.use(express.json({ limit: '10mb' }));
