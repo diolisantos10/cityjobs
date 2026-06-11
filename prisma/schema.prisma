@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Niche {
+  VAREJO
+  SAUDE
+  ESCRITORIO
+  RESTAURANTE
+  LOGISTICA
+}
+
+enum ContractType {
+  CLT
+  PJ
+  FREELANCER
+  TEMPORARIO
+  ESTAGIO
+  OUTRO
+}
+
+enum ApplicationMethod {
+  WHATSAPP
+  LINK
+  EMAIL
+  OTHER
+}
+
+enum JobStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  PAID
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+  ARCHIVED
+}
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  cnpj        String?
+  contactName String?
+  whatsapp    String?
+  email       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  jobPosts    JobPost[]
+}
+
+model JobPost {
+  id                  String            @id @default(cuid())
+  companyId           String?
+  company             Company?          @relation(fields: [companyId], references: [id])
+  companyName         String
+  cnpj                String?
+  roleTitle           String
+  niche               Niche
+  neighborhood        String
+  city                String            @default("São Paulo")
+  contractType        ContractType
+  salary              String
+  benefits            String?
+  applicationMethod   ApplicationMethod
+  applicationWhatsapp String?
+  applicationLink     String?
+  selectedPlanDays    Int
+  priceInCents        Int
+  paymentLink         String
+  status              JobStatus         @default(AWAITING_PAYMENT)
+  moderationNotes     String?
+  trustFlags          Json?
+  storyCopy           String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([status])
+  @@index([niche])
+  @@index([createdAt])
+}
+
+model PlanConfig {
+  id           String   @id @default(cuid())
+  days         Int      @unique
+  label        String
+  priceInCents Int
+  paymentLink  String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
