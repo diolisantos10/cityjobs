@@ -86,7 +86,13 @@ export default async function ConfirmacaoPage({ params }: { params: { id: string
         </p>
       </div>
 
-      <p className="mt-6 text-center text-xs text-gray-500">
+      <div className="mt-6 text-center">
+        <a href={`/vagas/${job.id}`} className="btn-secondary">
+          Acompanhar status da vaga
+        </a>
+      </div>
+
+      <p className="mt-4 text-center text-xs text-gray-500">
         Guarde este link para acompanhar sua vaga. Em caso de dúvida, fale com a gente pelo
         Instagram @cityjobs.sp.
       </p>

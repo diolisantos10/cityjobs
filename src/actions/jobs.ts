@@ -3,9 +3,17 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { jobPostSchema, updateStatusSchema, moderationNotesSchema } from '@/lib/validation';
+import {
+  jobPostSchema,
+  updateStatusSchema,
+  moderationNotesSchema,
+  editJobSchema,
+} from '@/lib/validation';
 import { generateStoryCopy } from '@/lib/storyCopy';
 import { requireAdmin } from '@/lib/adminAuth';
+import { findOrCreateCompany } from '@/lib/company';
+import { analyzeTrust } from '@/lib/trust';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export interface JobFormState {
   errors?: Record<string, string>;
@@ -26,6 +34,11 @@ export async function createJobPost(
       if (!errors[field]) errors[field] = issue.message;
     }
     return { errors, message: 'Corrija os campos destacados e envie novamente.' };
+  }
+
+  // Basic anti-spam: cap submissions per client window.
+  if (!checkRateLimit('createJobPost')) {
+    return { message: 'Muitas submissões em pouco tempo. Aguarde um instante e tente novamente.' };
   }
 
   const data = parsed.data;
@@ -49,8 +62,12 @@ export async function createJobPost(
     applicationMethod: data.applicationMethod,
   });
 
+  const companyId = await findOrCreateCompany({ name: data.companyName, cnpj: data.cnpj || null });
+  const trust = analyzeTrust(data);
+
   const job = await prisma.jobPost.create({
     data: {
+      companyId,
       companyName: data.companyName,
       cnpj: data.cnpj || null,
       roleTitle: data.roleTitle,
@@ -68,6 +85,7 @@ export async function createJobPost(
       paymentLink: plan.paymentLink,
       status: 'AWAITING_PAYMENT',
       storyCopy,
+      trustFlags: trust as unknown as object,
     },
   });
 
@@ -93,6 +111,68 @@ export async function updateJobStatus(formData: FormData): Promise<void> {
 
   revalidatePath('/admin');
   revalidatePath(`/admin/jobs/${parsed.data.jobId}`);
+}
+
+export interface EditJobState {
+  errors?: Record<string, string>;
+  message?: string;
+  success?: boolean;
+}
+
+export async function updateJobFields(
+  _prevState: EditJobState,
+  formData: FormData
+): Promise<EditJobState> {
+  requireAdmin();
+
+  const raw = Object.fromEntries(formData.entries());
+  const parsed = editJobSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    const errors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = issue.path.join('.');
+      if (!errors[field]) errors[field] = issue.message;
+    }
+    return { errors, message: 'Corrija os campos destacados.' };
+  }
+
+  const data = parsed.data;
+
+  // Regenerate story copy from the edited content.
+  const storyCopy = generateStoryCopy({
+    niche: data.niche,
+    roleTitle: data.roleTitle,
+    companyName: data.companyName,
+    neighborhood: data.neighborhood,
+    city: data.city,
+    salary: data.salary,
+    benefits: data.benefits || null,
+    applicationMethod: data.applicationMethod,
+  });
+
+  await prisma.jobPost.update({
+    where: { id: data.jobId },
+    data: {
+      companyName: data.companyName,
+      cnpj: data.cnpj || null,
+      roleTitle: data.roleTitle,
+      niche: data.niche,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      contractType: data.contractType,
+      salary: data.salary,
+      benefits: data.benefits || null,
+      applicationMethod: data.applicationMethod,
+      applicationWhatsapp: data.applicationWhatsapp || null,
+      applicationLink: data.applicationLink || null,
+      storyCopy,
+    },
+  });
+
+  revalidatePath(`/admin/jobs/${data.jobId}`);
+  revalidatePath('/admin');
+  return { success: true, message: 'Vaga atualizada e story copy regenerada.' };
 }
 
 export async function updateModerationNotes(formData: FormData): Promise<void> {

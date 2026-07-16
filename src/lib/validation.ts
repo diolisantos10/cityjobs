@@ -105,3 +105,20 @@ export const planConfigSchema = z.object({
   paymentLink: z.string().trim().url('Informe um link de pagamento válido'),
   active: z.coerce.boolean(),
 });
+
+// Admin edit of job content fields (no plan/payment/confirmation).
+export const editJobSchema = z.object({
+  jobId: z.string().min(1),
+  companyName: z.string().trim().min(2, 'Nome da empresa é obrigatório'),
+  cnpj: z.string().trim().optional().or(z.literal('')),
+  roleTitle: z.string().trim().min(3, 'Cargo deve ter pelo menos 3 caracteres'),
+  niche: z.enum(['VAREJO', 'SAUDE', 'ESCRITORIO', 'RESTAURANTE', 'LOGISTICA']),
+  neighborhood: z.string().trim().min(2, 'Bairro é obrigatório'),
+  city: z.string().trim().min(2),
+  contractType: z.enum(['CLT', 'PJ', 'FREELANCER', 'TEMPORARIO', 'ESTAGIO', 'OUTRO']),
+  salary: z.string().trim().min(2, 'Salário é obrigatório'),
+  benefits: z.string().trim().optional().or(z.literal('')),
+  applicationMethod: z.enum(['WHATSAPP', 'LINK', 'EMAIL', 'OTHER']),
+  applicationWhatsapp: z.string().trim().optional().or(z.literal('')),
+  applicationLink: z.string().trim().optional().or(z.literal('')),
+});

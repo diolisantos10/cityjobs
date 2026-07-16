@@ -4,6 +4,8 @@ import type { JobStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { updateJobStatus, updateModerationNotes } from '@/actions/jobs';
 import { StatusBadge } from '@/components/StatusBadge';
+import { TrustFlagsPanel } from '@/components/TrustFlagsPanel';
+import { EditJobForm } from '@/components/EditJobForm';
 import {
   formatDate,
   formatPrice,
@@ -123,6 +125,31 @@ export default async function AdminJobDetail({ params }: { params: { id: string 
         )}
       </div>
 
+      {/* Trust analysis */}
+      <div className="mt-4">
+        <TrustFlagsPanel trustFlags={job.trustFlags} />
+      </div>
+
+      {/* Story art preview */}
+      <div className="card mt-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold">Arte do Story (preview)</h2>
+          <a
+            href={`/api/story-art/${job.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-brand-700 hover:underline"
+          >
+            Abrir imagem
+          </a>
+        </div>
+        <img
+          src={`/api/story-art/${job.id}`}
+          alt="Preview da arte do story"
+          className="mt-3 w-full max-w-[320px] rounded-lg border border-gray-200"
+        />
+      </div>
+
       {/* Actions */}
       <div className="card mt-4">
         <h2 className="font-bold">Ações</h2>
@@ -158,6 +185,11 @@ export default async function AdminJobDetail({ params }: { params: { id: string 
           Salvar notas
         </button>
       </form>
+
+      {/* Edit job fields */}
+      <div className="mt-4">
+        <EditJobForm job={job} />
+      </div>
     </div>
   );
 }

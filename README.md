@@ -106,27 +106,35 @@ cityjobs/
 │   ├── app/
 │   │   ├── page.tsx                       # Landing
 │   │   ├── anunciar/page.tsx              # Formulário de envio
+│   │   ├── vagas/[id]/page.tsx            # Status público da vaga (empresa acompanha)
 │   │   ├── vagas/[id]/confirmacao/page.tsx
+│   │   ├── api/story-art/[id]/route.tsx   # Arte do Story (imagem 9:16) via next/og
 │   │   └── admin/
 │   │       ├── layout.tsx                 # Gate ADMIN_SECRET
 │   │       ├── page.tsx                   # Dashboard + KPIs + filtros
-│   │       ├── jobs/[id]/page.tsx         # Detalhe + ações + notas
+│   │       ├── jobs/[id]/page.tsx         # Detalhe + ações + notas + trust + edição
 │   │       └── plans/page.tsx             # Configuração de planos
 │   ├── actions/
-│   │   ├── jobs.ts            # createJobPost, updateJobStatus, updateModerationNotes
+│   │   ├── jobs.ts            # createJobPost, updateJobStatus, updateModerationNotes, updateJobFields
 │   │   ├── plans.ts           # updatePlanConfig, seedPlanConfigs
 │   │   └── admin.ts           # adminLogin, adminLogout
 │   ├── components/
 │   │   ├── JobForm.tsx        # Formulário client-side com campos condicionais
+│   │   ├── EditJobForm.tsx    # Edição de campos no admin (regenera story copy)
+│   │   ├── TrustFlagsPanel.tsx
 │   │   ├── StatusBadge.tsx
 │   │   └── AdminLoginForm.tsx
 │   └── lib/
 │       ├── prisma.ts          # Client singleton
-│       ├── validation.ts      # Schemas Zod
+│       ├── validation.ts      # Schemas Zod (submissão + edição)
 │       ├── storyCopy.ts       # Geração determinística de copy
+│       ├── company.ts         # findOrCreateCompany (dedupe por CNPJ)
+│       ├── trust.ts           # Heurísticas de risco (trustFlags)
+│       ├── rateLimit.ts       # Anti-spam por IP (janela em memória)
 │       ├── plans.ts           # Auto-seed + consultas de planos
 │       ├── adminAuth.ts       # Gate por cookie + ADMIN_SECRET
 │       └── constants.ts       # Nichos, contratos, status, formatação
+├── test/                      # node:test + tsx (storyCopy, validation, trust)
 └── railway.json
 ```
 
@@ -158,6 +166,9 @@ npm run prisma:seed
 
 # 5. Rodar
 npm run dev                     # http://localhost:3000
+
+# Testes (lógica pura — não precisa de banco)
+npm test                        # storyCopy, validação, trust
 ```
 
 > Os planos também são auto-seedados na primeira visita a `/anunciar` ou `/admin/plans` caso o banco esteja vazio.
@@ -203,4 +214,26 @@ npm run dev                     # http://localhost:3000
 - [ ] Detalhe da vaga: marcar paga → aprovar → publicar → arquivar persistem
 - [ ] Notas de moderação persistem
 - [ ] `/admin/plans` edita preço/link e nova vaga usa os valores atualizados
+- [ ] `/vagas/[id]` mostra o status da vaga para a empresa (read-only)
+- [ ] `/api/story-art/[id]` retorna a arte do Story (imagem 9:16)
+- [ ] Painel de confiança lista trustFlags (ex: sem CNPJ, termos suspeitos)
+- [ ] Admin consegue editar campos da vaga e a story copy é regenerada
+- [ ] `npm test` passa (20 testes)
 - [ ] `npm run build` conclui sem erros
+
+---
+
+## Recursos da Fase 2 (adicionados)
+
+- **Company vinculada**: cada submissão cria/reaproveita uma `Company` (dedupe por CNPJ, ou por nome quando sem CNPJ) e grava `companyId` na vaga.
+- **Página de status pública** (`/vagas/[id]`): a empresa acompanha o status pelo link, com explicação em linguagem clara e lembrete de pagamento enquanto pendente.
+- **trustFlags**: heurísticas determinísticas de risco no envio (termos de golpe, salário fora de faixa, empresa genérica, sem CNPJ) — não bloqueiam, apenas sinalizam para o admin.
+- **Arte do Story**: imagem 9:16 gerada server-side (`next/og`) a partir dos dados da vaga, para publicação manual no Instagram.
+- **Edição no admin**: correção de qualquer campo da vaga, regenerando a story copy.
+- **Rate limiting**: proteção anti-spam por IP no envio de vagas.
+- **Testes**: `node:test` + `tsx`, sem dependências novas, cobrindo story copy, validação e trust.
+
+### Follow-ups conhecidos
+- Teste e2e do fluxo completo de submissão (depende de Postgres em CI — os testes atuais cobrem a lógica pura).
+- Confirmação de pagamento automática (webhook Mercado Pago) — hoje o admin marca "paga" manualmente.
+- Auth admin multiusuário usando o model `AdminUser` (hoje é gate por segredo único).
