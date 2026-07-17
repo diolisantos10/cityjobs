@@ -121,4 +121,22 @@ export const editJobSchema = z.object({
   applicationMethod: z.enum(['WHATSAPP', 'LINK', 'EMAIL', 'OTHER']),
   applicationWhatsapp: z.string().trim().optional().or(z.literal('')),
   applicationLink: z.string().trim().optional().or(z.literal('')),
+}).superRefine((data, ctx) => {
+  // Mirror the public form's conditional requirements so an admin edit can't
+  // save a WhatsApp/Link vacancy without its contact, which would regenerate
+  // a story copy whose CTA points nowhere.
+  if (data.applicationMethod === 'WHATSAPP' && !data.applicationWhatsapp) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['applicationWhatsapp'],
+      message: 'Informe o WhatsApp para candidatura',
+    });
+  }
+  if (data.applicationMethod === 'LINK' && !data.applicationLink) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['applicationLink'],
+      message: 'Informe o link para candidatura',
+    });
+  }
 });

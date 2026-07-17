@@ -19,3 +19,6 @@ dist/
 
 # prisma
 prisma/*.db
+
+# local dev postgres
+.localpg/

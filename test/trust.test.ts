@@ -56,6 +56,17 @@ test('flags unusually high salary for local jobs', () => {
   assert.ok(result.flags.some((f) => f.code === 'salary_too_high'));
 });
 
+test('does NOT falsely flag salaries written without a thousands separator', () => {
+  // "R$ 2500" must parse as 2500, not 250 — otherwise it wrongly trips salary_too_low.
+  for (const salary of ['R$ 2500', 'R$ 1900', '2000']) {
+    const result = analyzeTrust(job({ salary }));
+    assert.ok(
+      !result.flags.some((f) => f.code === 'salary_too_low'),
+      `"${salary}" should not be flagged as too low`
+    );
+  }
+});
+
 test('score increases with severity', () => {
   const clean = analyzeTrust(job());
   const risky = analyzeTrust(

@@ -44,14 +44,18 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-// Extract the largest number found in a salary string (handles "R$ 2.500", "2500", "2.000 a 2.500").
+// Extract the largest number found in a salary string.
+// Handles BRL formats: "R$ 2.500", "2500", "2000", "2.000 a 2.500", "1.900,50".
+// A full numeric token is matched first (digits + inner dots/spaces/commas) so a
+// value written WITHOUT a thousands separator ("2500") isn't split into "250"+"0".
 function extractSalaryValue(salary: string): number | null {
   const cleaned = salary.replace(/r\$/gi, ' ');
-  const matches = cleaned.match(/\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})?|\d+/g);
+  const matches = cleaned.match(/\d[\d.\s]*\d(?:,\d{1,2})?|\d/g);
   if (!matches) return null;
 
   const values = matches
     .map((m) => {
+      // In BRL, '.' and spaces are thousands separators; ',' is the decimal mark.
       const normalizedNum = m.replace(/[.\s]/g, '').replace(',', '.');
       return parseFloat(normalizedNum);
     })

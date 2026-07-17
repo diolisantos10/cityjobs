@@ -26,11 +26,20 @@ function clientIp(): string {
   return h.get('x-real-ip') ?? 'unknown';
 }
 
+// Drop entries whose window has fully elapsed so the map can't grow unbounded
+// under many distinct IPs over the process lifetime.
+function evictExpired(now: number): void {
+  for (const [key, hit] of store) {
+    if (now - hit.windowStart > WINDOW_MS) store.delete(key);
+  }
+}
+
 export function checkRateLimit(bucket: string, now = Date.now()): boolean {
   const key = `${bucket}:${clientIp()}`;
   const hit = store.get(key);
 
   if (!hit || now - hit.windowStart > WINDOW_MS) {
+    if (store.size > 500) evictExpired(now);
     store.set(key, { count: 1, windowStart: now });
     return true;
   }
