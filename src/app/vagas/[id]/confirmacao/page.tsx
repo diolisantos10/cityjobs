@@ -71,18 +71,13 @@ export default async function ConfirmacaoPage({ params }: { params: { id: string
           <p className="text-2xl font-extrabold text-brand-700">{formatPrice(job.priceInCents)}</p>
         </div>
 
-        <a
-          href={job.paymentLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary mt-4 w-full py-3 text-base"
-        >
-          Pagar agora
+        <a href={`/vagas/${job.id}/pagamento`} className="btn-primary mt-4 w-full py-3 text-base">
+          Pagar com cartão ou PIX
         </a>
 
         <p className="mt-3 text-center text-xs text-brand-800/70">
-          Status: Aguardando pagamento. Após confirmação do pagamento, a vaga entra em validação e
-          será publicada nos stories do CityJobs SP.
+          Status: Aguardando pagamento. Após a confirmação, a vaga entra em validação e será
+          publicada nos stories do CityJobs SP.
         </p>
       </div>
 

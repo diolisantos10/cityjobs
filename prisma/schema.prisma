@@ -77,6 +77,13 @@ model JobPost {
   moderationNotes     String?
   trustFlags          Json?
   storyCopy           String?
+
+  // Mercado Pago (Checkout Transparente) tracking
+  mpPaymentId         String?           @unique
+  mpStatus            String?           // approved | pending | in_process | rejected | ...
+  mpStatusDetail      String?
+  paidAt              DateTime?
+
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 

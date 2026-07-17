@@ -181,6 +181,29 @@ npm test                        # storyCopy, validação, trust
 |---|---|
 | `DATABASE_URL` | Connection string PostgreSQL |
 | `ADMIN_SECRET` | Senha de acesso ao painel `/admin` |
+| `MERCADOPAGO_ACCESS_TOKEN` | Token de acesso do Mercado Pago (backend, secreto) |
+| `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` | Public Key do Mercado Pago (frontend) |
+| `MERCADOPAGO_WEBHOOK_URL` | (opcional) URL do webhook para confirmação de PIX |
+
+### Pagamento — Mercado Pago (Checkout Transparente)
+
+A tela de pagamento (`/vagas/[id]/pagamento`) usa o **Checkout Transparente (Bricks)**:
+o cliente paga com **cartão ou PIX dentro do próprio site**, sem redirect. Dados de
+cartão são tokenizados no navegador e **não passam pelos servidores do CityJobs**.
+
+**Como obter as credenciais:**
+1. Acesse https://www.mercadopago.com.br/developers → **Suas integrações**
+2. Crie (ou abra) uma aplicação → **Credenciais**
+3. Copie o **Access Token** → `MERCADOPAGO_ACCESS_TOKEN`
+4. Copie a **Public Key** → `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY`
+5. Use as credenciais de **teste** para validar e as de **produção** para o site real
+
+**Webhook (necessário para PIX):** no painel do MP, em **Webhooks**, aponte para
+`https://<seu-domínio>/api/payments/webhook` (eventos de *payment*). O PIX é criado como
+`pending` e só vira `PAID` quando o webhook confirma o pagamento.
+
+Enquanto as credenciais não estão configuradas, a tela mostra um aviso de "configurar"
+(com fallback para o link `mpago.li`) — o site **não quebra**.
 
 ---
 

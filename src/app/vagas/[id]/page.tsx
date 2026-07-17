@@ -28,9 +28,17 @@ const STATUS_EXPLANATION: Record<JobStatus, string> = {
   ARCHIVED: 'Esta vaga foi arquivada.',
 };
 
-export default async function JobStatusPage({ params }: { params: { id: string } }) {
+export default async function JobStatusPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { pago?: string };
+}) {
   const job = await prisma.jobPost.findUnique({ where: { id: params.id } });
   if (!job) notFound();
+
+  const justPaid = searchParams.pago === '1';
 
   return (
     <div className="mx-auto max-w-xl">
@@ -38,6 +46,13 @@ export default async function JobStatusPage({ params }: { params: { id: string }
       <p className="mt-1 text-sm text-gray-500">
         Guarde este link para acompanhar sua vaga a qualquer momento.
       </p>
+
+      {justPaid && (
+        <div className="card mt-4 border-brand-200 bg-brand-50 text-brand-800">
+          ✅ <span className="font-semibold">Pagamento aprovado!</span> Sua vaga entrou na fila de
+          validação.
+        </div>
+      )}
 
       {/* Status */}
       <div className="card mt-6">
@@ -69,12 +84,7 @@ export default async function JobStatusPage({ params }: { params: { id: string }
               </p>
               <p className="text-lg font-bold text-brand-800">{formatPrice(job.priceInCents)}</p>
             </div>
-            <a
-              href={job.paymentLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary"
-            >
+            <a href={`/vagas/${job.id}/pagamento`} className="btn-primary">
               Pagar agora
             </a>
           </div>
