@@ -100,7 +100,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
             id="city"
             name="city"
             className="input w-40"
-            placeholder="Mogi das Cruzes"
+            placeholder="São Paulo"
             defaultValue={searchParams.city ?? ''}
           />
         </div>

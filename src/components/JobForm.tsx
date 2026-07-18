@@ -7,7 +7,6 @@ import {
   NICHE_OPTIONS,
   CONTRACT_TYPE_OPTIONS,
   APPLICATION_METHOD_OPTIONS,
-  ALTO_TIETE_CITIES,
   formatPrice,
 } from '@/lib/constants';
 
@@ -140,18 +139,16 @@ export function JobForm({ plans }: { plans: PlanOption[] }) {
 
           <div>
             <label htmlFor="city" className="label">
-              Cidade * <span className="font-normal text-gray-500">(Alto Tietê)</span>
+              Cidade *
             </label>
-            <select id="city" name="city" className="input" defaultValue="" required>
-              <option value="" disabled>
-                Selecione…
-              </option>
-              {ALTO_TIETE_CITIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            <input
+              id="city"
+              name="city"
+              className="input"
+              placeholder="Ex: São Paulo, Guarulhos, Osasco"
+              defaultValue="São Paulo"
+              required
+            />
             <FieldError errors={state.errors} field="city" />
           </div>
         </div>

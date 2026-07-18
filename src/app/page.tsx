@@ -21,8 +21,8 @@ export default async function HomePage() {
           Publique sua vaga local com salário aberto
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-gray-600">
-          Vagas do <strong>Alto Tietê</strong> — Mogi, Suzano, Itaquá e região. Envie os dados,
-          pague o plano e aguarde validação para publicação nos stories do CityJobs.
+          Vagas de <strong>São Paulo e Grande São Paulo</strong>. Envie os dados, pague o plano e
+          aguarde validação para publicação nos stories do CityJobs.
         </p>
         <div className="mt-8">
           <Link href="/anunciar" className="btn-primary px-8 py-3 text-base">
