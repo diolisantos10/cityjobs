@@ -28,3 +28,73 @@
     @apply rounded-xl border border-gray-200 bg-white p-5 shadow-sm;
   }
 }
+
+/* ─── Coming soon splash (brand: navy + white) ─────────────────────────── */
+.cj-soon {
+  position: fixed;
+  inset: 0;
+  z-index: 1000; /* cover the global header/footer for a clean full-screen splash */
+  background: #13294b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+.cj-soon-inner {
+  max-width: 34rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cj-logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 0.92;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: clamp(3.5rem, 14vw, 6rem);
+}
+.cj-logo span { display: block; }
+.cj-soon-badge {
+  margin-top: 1.75rem;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 0.35rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cj-soon-title {
+  margin-top: 1.5rem;
+  font-size: clamp(1.5rem, 5vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+.cj-soon-sub {
+  margin-top: 0.85rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+}
+.cj-soon-ig {
+  margin-top: 1.75rem;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  padding-bottom: 2px;
+}
+.cj-soon-ig:hover { border-color: #fff; }
+.cj-soon-link {
+  margin-top: 2.5rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.cj-soon-link:hover { color: rgba(255, 255, 255, 0.9); }

@@ -1,10 +1,16 @@
 import Link from 'next/link';
 import { getActivePlans } from '@/lib/plans';
 import { formatPrice, NICHE_OPTIONS } from '@/lib/constants';
+import { ComingSoon } from '@/components/ComingSoon';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
+  // Pre-launch: show the "Em breve" splash. Flip COMING_SOON to launch — no code change.
+  if (process.env.COMING_SOON === 'true') {
+    return <ComingSoon />;
+  }
+
   const plans = await getActivePlans();
 
   return (
