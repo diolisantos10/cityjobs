@@ -7,6 +7,7 @@ import {
   NICHE_OPTIONS,
   CONTRACT_TYPE_OPTIONS,
   APPLICATION_METHOD_OPTIONS,
+  ALTO_TIETE_CITIES,
   formatPrice,
 } from '@/lib/constants';
 
@@ -131,7 +132,7 @@ export function JobForm({ plans }: { plans: PlanOption[] }) {
               id="neighborhood"
               name="neighborhood"
               className="input"
-              placeholder="Ex: Pinheiros"
+              placeholder="Ex: Centro, Vila Oliveira"
               required
             />
             <FieldError errors={state.errors} field="neighborhood" />
@@ -139,9 +140,18 @@ export function JobForm({ plans }: { plans: PlanOption[] }) {
 
           <div>
             <label htmlFor="city" className="label">
-              Cidade *
+              Cidade * <span className="font-normal text-gray-500">(Alto Tietê)</span>
             </label>
-            <input id="city" name="city" className="input" defaultValue="São Paulo" required />
+            <select id="city" name="city" className="input" defaultValue="" required>
+              <option value="" disabled>
+                Selecione…
+              </option>
+              {ALTO_TIETE_CITIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
             <FieldError errors={state.errors} field="city" />
           </div>
         </div>

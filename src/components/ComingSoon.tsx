@@ -18,8 +18,8 @@ export function ComingSoon() {
 
         <h1 className="cj-soon-title">Vagas locais com salário aberto</h1>
         <p className="cj-soon-sub">
-          O canal de vagas de São Paulo direto nos stories. Vagas reais, salário visível,
-          candidatura rápida.
+          O canal de vagas do <strong>Alto Tietê</strong> direto nos stories — Mogi das Cruzes,
+          Suzano, Itaquá, Ferraz, Poá e região. Vagas reais, salário visível, candidatura rápida.
         </p>
 
         <a

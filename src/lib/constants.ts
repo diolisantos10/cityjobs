@@ -1,5 +1,20 @@
 import type { Niche, ContractType, ApplicationMethod, JobStatus } from '@prisma/client';
 
+// Região de lançamento: Alto Tietê (Grande São Paulo).
+export const REGION_NAME = 'Alto Tietê';
+
+// Cidades atendidas na largada (ordenadas por porte).
+export const ALTO_TIETE_CITIES = [
+  'Mogi das Cruzes',
+  'Suzano',
+  'Itaquaquecetuba',
+  'Ferraz de Vasconcelos',
+  'Poá',
+  'Guararema',
+  'Biritiba Mirim',
+  'Salesópolis',
+] as const;
+
 export const NICHE_OPTIONS: { value: Niche; label: string }[] = [
   { value: 'VAREJO', label: 'Varejo' },
   { value: 'SAUDE', label: 'Saúde' },

@@ -40,7 +40,7 @@ export const jobPostSchema = z
       .string({ required_error: 'Bairro é obrigatório' })
       .trim()
       .min(2, 'Bairro é obrigatório'),
-    city: z.string().trim().min(2).default('São Paulo'),
+    city: z.string().trim().min(2).default('Mogi das Cruzes'),
     contractType: z.enum(['CLT', 'PJ', 'FREELANCER', 'TEMPORARIO', 'ESTAGIO', 'OUTRO'], {
       errorMap: () => ({ message: 'Selecione o tipo de contrato' }),
     }),
