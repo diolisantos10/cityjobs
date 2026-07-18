@@ -179,6 +179,40 @@ export default async function AdminJobDetail({ params }: { params: { id: string 
                 </div>
               )}
             </div>
+
+            {/* Artes geradas pelo agente de design */}
+            <div>
+              <p className="font-semibold">
+                Artes geradas pelo agente ({job.artDesignCount})
+              </p>
+              <div className="mt-2 flex flex-wrap gap-3">
+                {Array.from({ length: job.artDesignCount ?? 1 }).map((_, i) => {
+                  const v = i + 1;
+                  return (
+                    <a
+                      key={v}
+                      href={`/api/design/${job.id}/${v}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={`/api/design/${job.id}/${v}`}
+                        alt={`Arte gerada ${v}`}
+                        className="w-[150px] rounded-lg border border-gray-200"
+                      />
+                      <span className="mt-1 block text-center text-xs text-brand-700">
+                        Arte {v} — abrir/baixar
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Geradas automaticamente a partir do briefing. Abra em tamanho real para baixar e
+                publicar.
+              </p>
+            </div>
           </div>
         ) : job.artMode === 'SELF_UPLOAD' ? (
           <div className="mt-3 text-sm">
