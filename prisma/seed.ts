@@ -23,6 +23,11 @@ const PLAN_DEFAULTS = [
   },
 ];
 
+const ART_PRICE_DEFAULTS = [
+  { designCount: 1, label: '1 arte', priceInCents: 3900 },
+  { designCount: 2, label: '2 artes', priceInCents: 6900 },
+];
+
 async function main() {
   for (const plan of PLAN_DEFAULTS) {
     await prisma.planConfig.upsert({
@@ -31,6 +36,15 @@ async function main() {
       create: { ...plan, active: true },
     });
     console.log(`PlanConfig seeded: ${plan.label} — R$ ${(plan.priceInCents / 100).toFixed(2)}`);
+  }
+
+  for (const art of ART_PRICE_DEFAULTS) {
+    await prisma.artPriceConfig.upsert({
+      where: { designCount: art.designCount },
+      update: {},
+      create: { ...art, active: true },
+    });
+    console.log(`ArtPriceConfig seeded: ${art.label} — R$ ${(art.priceInCents / 100).toFixed(2)}`);
   }
 }
 

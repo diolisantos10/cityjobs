@@ -17,6 +17,7 @@ function validBase(overrides: Record<string, unknown> = {}) {
     applicationWhatsapp: '11999999999',
     applicationLink: '',
     selectedPlanDays: '3',
+    artMode: 'SELF_UPLOAD',
     confirmation: 'on',
     ...overrides,
   };

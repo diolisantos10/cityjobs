@@ -1,4 +1,5 @@
 import { getActivePlans } from '@/lib/plans';
+import { getActiveArtPrices } from '@/lib/artPricing';
 import { JobForm } from '@/components/JobForm';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +9,7 @@ export const metadata = {
 };
 
 export default async function AnunciarPage() {
-  const plans = await getActivePlans();
+  const [plans, artPrices] = await Promise.all([getActivePlans(), getActiveArtPrices()]);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -27,6 +28,11 @@ export default async function AnunciarPage() {
             days: p.days,
             label: p.label,
             priceInCents: p.priceInCents,
+          }))}
+          artPrices={artPrices.map((a) => ({
+            designCount: a.designCount,
+            label: a.label,
+            priceInCents: a.priceInCents,
           }))}
         />
       </div>

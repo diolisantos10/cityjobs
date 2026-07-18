@@ -14,6 +14,18 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { findOrCreateCompany } from '@/lib/company';
 import { analyzeTrust } from '@/lib/trust';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { artPriceForCount } from '@/lib/artPricing';
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp'];
+
+async function readUpload(file: FormDataEntryValue | null): Promise<{ mime: string; data: Buffer } | null | 'invalid'> {
+  if (!file || typeof file === 'string') return null;
+  const f = file as File;
+  if (f.size === 0) return null;
+  if (f.size > MAX_UPLOAD_BYTES || !ALLOWED_IMAGE_MIME.includes(f.type)) return 'invalid';
+  return { mime: f.type, data: Buffer.from(await f.arrayBuffer()) };
+}
 
 export interface JobFormState {
   errors?: Record<string, string>;
@@ -51,6 +63,33 @@ export async function createJobPost(
     return { message: 'Plano selecionado não está disponível. Atualize a página e tente novamente.' };
   }
 
+  // ─── Arte do Story: preço + uploads ────────────────────────────────────────
+  const weCreate = data.artMode === 'WE_CREATE';
+  const artDesignCount = weCreate ? Number(data.artDesignCount) : null;
+  const artPriceInCents = weCreate ? await artPriceForCount(artDesignCount as number) : 0;
+
+  // Read uploads (art required when the client sends their own; logo optional).
+  const artUpload = await readUpload(formData.get('artFile'));
+  const logoUpload = await readUpload(formData.get('logoFile'));
+
+  if (artUpload === 'invalid' || logoUpload === 'invalid') {
+    return { errors: { artFile: 'Envie uma imagem PNG/JPG/WebP de até 5 MB.' }, message: 'Arquivo inválido.' };
+  }
+  if (data.artMode === 'SELF_UPLOAD' && !artUpload) {
+    return { errors: { artFile: 'Envie a arte do seu story.' }, message: 'Falta a arte do story.' };
+  }
+
+  const designBrief = weCreate
+    ? {
+        useLogo: data.designUseLogo === 'on',
+        style: data.designStyle || null,
+        colors: data.designColors || null,
+        notes: data.designNotes || null,
+      }
+    : null;
+
+  const totalPriceInCents = plan.priceInCents + artPriceInCents;
+
   const storyCopy = generateStoryCopy({
     niche: data.niche,
     roleTitle: data.roleTitle,
@@ -81,13 +120,26 @@ export async function createJobPost(
       applicationWhatsapp: data.applicationWhatsapp || null,
       applicationLink: data.applicationLink || null,
       selectedPlanDays: plan.days,
-      priceInCents: plan.priceInCents,
+      planPriceInCents: plan.priceInCents,
+      artMode: data.artMode,
+      artDesignCount,
+      artPriceInCents,
+      designBrief: designBrief as unknown as object,
+      priceInCents: totalPriceInCents,
       paymentLink: plan.paymentLink,
       status: 'AWAITING_PAYMENT',
       storyCopy,
       trustFlags: trust as unknown as object,
     },
   });
+
+  // Persist uploads linked to the job (types already narrowed past 'invalid').
+  const assets = [];
+  if (artUpload)
+    assets.push({ jobId: job.id, kind: 'ART' as const, mime: artUpload.mime, data: artUpload.data });
+  if (logoUpload)
+    assets.push({ jobId: job.id, kind: 'LOGO' as const, mime: logoUpload.mime, data: logoUpload.data });
+  if (assets.length) await prisma.asset.createMany({ data: assets });
 
   redirect(`/vagas/${job.id}/confirmacao`);
 }

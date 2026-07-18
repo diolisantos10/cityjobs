@@ -42,6 +42,16 @@ enum JobStatus {
   ARCHIVED
 }
 
+enum ArtMode {
+  WE_CREATE   // CityJobs cria a arte (pago) — passa pela anamnese + agente de design
+  SELF_UPLOAD // Cliente envia a própria arte (incluído)
+}
+
+enum AssetKind {
+  ART  // arte final enviada pelo cliente (SELF_UPLOAD)
+  LOGO // logo do cliente (para o agente de design usar)
+}
+
 model Company {
   id          String    @id @default(cuid())
   name        String
@@ -71,12 +81,20 @@ model JobPost {
   applicationWhatsapp String?
   applicationLink     String?
   selectedPlanDays    Int
-  priceInCents        Int
+  priceInCents        Int               // total cobrado = plano + criação de arte
+  planPriceInCents    Int               @default(0) // parcela do plano
   paymentLink         String
   status              JobStatus         @default(AWAITING_PAYMENT)
   moderationNotes     String?
   trustFlags          Json?
   storyCopy           String?
+
+  // Arte do Story
+  artMode             ArtMode?          // WE_CREATE | SELF_UPLOAD
+  artDesignCount      Int?              // 1 ou 2, quando WE_CREATE
+  artPriceInCents     Int               @default(0) // add-on da criação de arte
+  designBrief         Json?             // anamnese: { useLogo, style, colors, notes }
+  assets              Asset[]
 
   // Mercado Pago (Checkout Transparente) tracking
   mpPaymentId         String?           @unique
@@ -90,6 +108,31 @@ model JobPost {
   @@index([status])
   @@index([niche])
   @@index([createdAt])
+}
+
+// Uploads (arte final / logo) armazenados no próprio banco para evitar
+// dependência de storage externo no MVP. Servidos via /api/assets/[id].
+model Asset {
+  id        String    @id @default(cuid())
+  jobId     String
+  job       JobPost   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  kind      AssetKind
+  mime      String
+  data      Bytes
+  createdAt DateTime  @default(now())
+
+  @@index([jobId])
+}
+
+// Preço da criação de arte, configurável no /admin (por quantidade de designs).
+model ArtPriceConfig {
+  id           String   @id @default(cuid())
+  designCount  Int      @unique // 1 ou 2
+  label        String
+  priceInCents Int
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model PlanConfig {

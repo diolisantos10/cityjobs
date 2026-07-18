@@ -25,12 +25,21 @@ const ACTION_BUTTONS: { status: JobStatus; label: string; style: string }[] = [
 ];
 
 export default async function AdminJobDetail({ params }: { params: { id: string } }) {
-  const job = await prisma.jobPost.findUnique({ where: { id: params.id } });
+  const job = await prisma.jobPost.findUnique({
+    where: { id: params.id },
+    include: { assets: true },
+  });
   if (!job) notFound();
 
   const methodLabel =
     APPLICATION_METHOD_OPTIONS.find((m) => m.value === job.applicationMethod)?.label ??
     job.applicationMethod;
+
+  const brief = (job.designBrief ?? null) as
+    | { useLogo?: boolean; style?: string | null; colors?: string | null; notes?: string | null }
+    | null;
+  const artAsset = job.assets.find((a) => a.kind === 'ART');
+  const logoAsset = job.assets.find((a) => a.kind === 'LOGO');
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -123,6 +132,79 @@ export default async function AdminJobDetail({ params }: { params: { id: string 
         ) : (
           <p className="mt-2 text-sm text-gray-500">Nenhuma copy gerada.</p>
         )}
+      </div>
+
+      {/* Arte do Story (escolha do cliente) */}
+      <div className="card mt-4">
+        <h2 className="font-bold">Arte do Story</h2>
+        {job.artMode === 'WE_CREATE' ? (
+          <div className="mt-3 space-y-3 text-sm">
+            <p>
+              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                CityJobs cria a arte
+              </span>{' '}
+              <span className="text-gray-600">
+                {job.artDesignCount} arte{job.artDesignCount === 1 ? '' : 's'} —{' '}
+                {formatPrice(job.artPriceInCents)}
+              </span>
+            </p>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <p className="font-semibold">Briefing de design</p>
+              <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                <div>
+                  <dt className="text-gray-500">Usar logo</dt>
+                  <dd>{brief?.useLogo ? 'Sim' : 'Não'}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500">Estilo</dt>
+                  <dd>{brief?.style || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500">Cores</dt>
+                  <dd>{brief?.colors || '—'}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-gray-500">Observações</dt>
+                  <dd>{brief?.notes || '—'}</dd>
+                </div>
+              </dl>
+              {logoAsset && (
+                <div className="mt-3">
+                  <p className="text-gray-500">Logo enviado:</p>
+                  <img
+                    src={`/api/assets/${logoAsset.id}`}
+                    alt="Logo do cliente"
+                    className="mt-1 max-h-32 rounded border border-gray-200 bg-white p-2"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : job.artMode === 'SELF_UPLOAD' ? (
+          <div className="mt-3 text-sm">
+            <span className="rounded bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-800">
+              Cliente enviou a arte
+            </span>
+            {artAsset ? (
+              <a href={`/api/assets/${artAsset.id}`} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={`/api/assets/${artAsset.id}`}
+                  alt="Arte enviada pelo cliente"
+                  className="mt-3 w-full max-w-[320px] rounded-lg border border-gray-200"
+                />
+              </a>
+            ) : (
+              <p className="mt-2 text-gray-500">Nenhuma arte anexada.</p>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-gray-500">Não informado.</p>
+        )}
+
+        <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-500">
+          Plano {formatPrice(job.planPriceInCents)} + Arte {formatPrice(job.artPriceInCents)} ={' '}
+          <span className="font-semibold text-gray-700">Total {formatPrice(job.priceInCents)}</span>
+        </p>
       </div>
 
       {/* Trust analysis */}

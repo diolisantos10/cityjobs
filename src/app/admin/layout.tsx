@@ -37,6 +37,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/plans" className="text-brand-700 hover:underline">
             Planos
           </Link>
+          <Link href="/admin/art-prices" className="text-brand-700 hover:underline">
+            Preço de arte
+          </Link>
         </nav>
         <form action={adminLogout}>
           <button type="submit" className="btn-secondary text-xs">

@@ -18,6 +18,7 @@ function job(overrides: Partial<JobPostInput> = {}): JobPostInput {
     applicationWhatsapp: '11999999999',
     applicationLink: '',
     selectedPlanDays: 3,
+    artMode: 'SELF_UPLOAD',
     confirmation: 'on',
     ...overrides,
   } as JobPostInput;

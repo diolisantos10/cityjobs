@@ -57,6 +57,17 @@ export const jobPostSchema = z
     selectedPlanDays: z.coerce
       .number({ invalid_type_error: 'Selecione um plano' })
       .refine((days) => [1, 3, 7].includes(days), { message: 'Plano inválido' }),
+
+    // Arte do Story
+    artMode: z.enum(['WE_CREATE', 'SELF_UPLOAD'], {
+      errorMap: () => ({ message: 'Escolha como será a arte do story' }),
+    }),
+    artDesignCount: z.coerce.number().optional(),
+    designUseLogo: z.string().optional(), // 'on' | undefined
+    designStyle: z.string().trim().optional().or(z.literal('')),
+    designColors: z.string().trim().optional().or(z.literal('')),
+    designNotes: z.string().trim().max(1000).optional().or(z.literal('')),
+
     confirmation: z.literal('on', {
       errorMap: () => ({ message: 'Você precisa confirmar que a vaga é real' }),
     }),
@@ -74,6 +85,13 @@ export const jobPostSchema = z
         code: z.ZodIssueCode.custom,
         path: ['applicationLink'],
         message: 'Informe o link para candidatura',
+      });
+    }
+    if (data.artMode === 'WE_CREATE' && ![1, 2].includes(Number(data.artDesignCount))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['artDesignCount'],
+        message: 'Escolha quantas artes (1 ou 2)',
       });
     }
   });

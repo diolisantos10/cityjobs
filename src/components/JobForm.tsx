@@ -17,6 +17,12 @@ interface PlanOption {
   priceInCents: number;
 }
 
+interface ArtPriceOption {
+  designCount: number;
+  label: string;
+  priceInCents: number;
+}
+
 const initialState: JobFormState = {};
 
 function SubmitButton() {
@@ -33,9 +39,17 @@ function FieldError({ errors, field }: { errors?: Record<string, string>; field:
   return <p className="field-error">{errors[field]}</p>;
 }
 
-export function JobForm({ plans }: { plans: PlanOption[] }) {
+export function JobForm({
+  plans,
+  artPrices,
+}: {
+  plans: PlanOption[];
+  artPrices: ArtPriceOption[];
+}) {
   const [state, formAction] = useFormState(createJobPost, initialState);
   const [applicationMethod, setApplicationMethod] = useState('WHATSAPP');
+  const [artMode, setArtMode] = useState('');
+  const [useLogo, setUseLogo] = useState(false);
 
   return (
     <form action={formAction} className="space-y-8">
@@ -259,6 +273,153 @@ export function JobForm({ plans }: { plans: PlanOption[] }) {
           </label>
         ))}
         <FieldError errors={state.errors} field="selectedPlanDays" />
+      </fieldset>
+
+      {/* Arte do Story */}
+      <fieldset className="card space-y-3">
+        <legend className="px-1 text-base font-bold">Arte do Story</legend>
+        <p className="text-sm text-gray-500">Como você quer a imagem que vai ao ar?</p>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+          <input
+            type="radio"
+            name="artMode"
+            value="WE_CREATE"
+            checked={artMode === 'WE_CREATE'}
+            onChange={() => setArtMode('WE_CREATE')}
+            className="mt-0.5 h-4 w-4 accent-brand-600"
+            required
+          />
+          <span>
+            <span className="font-medium">O CityJobs cria a arte pra mim</span>
+            <span className="block text-xs text-gray-500">
+              Design profissional feito pela nossa equipe. Valor adicional ao plano.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+          <input
+            type="radio"
+            name="artMode"
+            value="SELF_UPLOAD"
+            checked={artMode === 'SELF_UPLOAD'}
+            onChange={() => setArtMode('SELF_UPLOAD')}
+            className="mt-0.5 h-4 w-4 accent-brand-600"
+            required
+          />
+          <span>
+            <span className="font-medium">Eu envio minha própria arte</span>
+            <span className="block text-xs text-gray-500">Incluído no plano, sem custo extra.</span>
+          </span>
+        </label>
+        <FieldError errors={state.errors} field="artMode" />
+
+        {/* Opção A: CityJobs cria */}
+        {artMode === 'WE_CREATE' && (
+          <div className="space-y-4 rounded-lg bg-gray-50 p-4">
+            <div>
+              <label className="label">Quantas artes?</label>
+              <div className="space-y-2">
+                {artPrices.map((ap, i) => (
+                  <label
+                    key={ap.designCount}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50"
+                  >
+                    <input
+                      type="radio"
+                      name="artDesignCount"
+                      value={ap.designCount}
+                      defaultChecked={i === 0}
+                      className="h-4 w-4 accent-brand-600"
+                    />
+                    <span className="flex-1 font-medium">{ap.label}</span>
+                    <span className="font-bold text-brand-700">+ {formatPrice(ap.priceInCents)}</span>
+                  </label>
+                ))}
+              </div>
+              <FieldError errors={state.errors} field="artDesignCount" />
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                name="designUseLogo"
+                checked={useLogo}
+                onChange={(e) => setUseLogo(e.target.checked)}
+                className="h-4 w-4 accent-brand-600"
+              />
+              Usar o logo da minha empresa
+            </label>
+
+            {useLogo && (
+              <div>
+                <label htmlFor="logoFile" className="label">
+                  Envie seu logo (PNG/JPG/WebP)
+                </label>
+                <input
+                  id="logoFile"
+                  name="logoFile"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="input"
+                />
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="designStyle" className="label">
+                Estilo desejado
+              </label>
+              <input
+                id="designStyle"
+                name="designStyle"
+                className="input"
+                placeholder="Ex: moderno, clean, chamativo"
+              />
+            </div>
+            <div>
+              <label htmlFor="designColors" className="label">
+                Cores da marca
+              </label>
+              <input
+                id="designColors"
+                name="designColors"
+                className="input"
+                placeholder="Ex: vermelho e branco"
+              />
+            </div>
+            <div>
+              <label htmlFor="designNotes" className="label">
+                Observações de design
+              </label>
+              <textarea
+                id="designNotes"
+                name="designNotes"
+                rows={2}
+                className="input"
+                placeholder="Algo específico que você gostaria na arte?"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Opção B: cliente envia */}
+        {artMode === 'SELF_UPLOAD' && (
+          <div className="rounded-lg bg-gray-50 p-4">
+            <label htmlFor="artFile" className="label">
+              Envie a arte do seu story * <span className="font-normal text-gray-500">(PNG/JPG/WebP, ideal 1080×1920)</span>
+            </label>
+            <input
+              id="artFile"
+              name="artFile"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="input"
+            />
+            <FieldError errors={state.errors} field="artFile" />
+          </div>
+        )}
       </fieldset>
 
       {/* Confirmation */}

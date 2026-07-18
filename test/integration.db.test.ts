@@ -71,6 +71,7 @@ suite('a submission persists plan price, payment link, story copy and trust flag
     applicationWhatsapp: '11988887777',
     applicationLink: '',
     selectedPlanDays: 1,
+    artMode: 'SELF_UPLOAD' as const,
     confirmation: 'on' as const,
   };
 
