@@ -2,8 +2,8 @@ import { prisma } from './prisma';
 
 // Defaults editáveis no /admin. Valores iniciais — o admin ajusta depois.
 export const ART_PRICE_DEFAULTS = [
-  { designCount: 1, label: '1 arte', priceInCents: 3900 },
-  { designCount: 2, label: '2 artes', priceInCents: 6900 },
+  { designCount: 1, label: '1 arte', priceInCents: 5990 },
+  { designCount: 2, label: '2 artes', priceInCents: 9990 },
 ];
 
 export async function ensureArtPriceConfigs() {

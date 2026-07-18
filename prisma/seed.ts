@@ -24,8 +24,8 @@ const PLAN_DEFAULTS = [
 ];
 
 const ART_PRICE_DEFAULTS = [
-  { designCount: 1, label: '1 arte', priceInCents: 3900 },
-  { designCount: 2, label: '2 artes', priceInCents: 6900 },
+  { designCount: 1, label: '1 arte', priceInCents: 5990 },
+  { designCount: 2, label: '2 artes', priceInCents: 9990 },
 ];
 
 async function main() {
