@@ -48,8 +48,9 @@ enum ArtMode {
 }
 
 enum AssetKind {
-  ART  // arte final enviada pelo cliente (SELF_UPLOAD)
-  LOGO // logo do cliente (para o agente de design usar)
+  ART   // arte final enviada pelo cliente (SELF_UPLOAD)
+  LOGO  // logo do cliente (para o agente de design usar)
+  AI_BG // fundo gerado por IA (OpenAI) para o agente de design
 }
 
 // Região = eixo de segmentação (cada região tem seu Instagram). O site é único

@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
 import { buildDesignSpec, type DesignBrief } from '@/lib/designAgent';
+import { getOrCreateBackground } from '@/lib/artBackground';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,8 +46,26 @@ export async function GET(
     if (logo) logoDataUri = `data:${logo.mime};base64,${Buffer.from(logo.data).toString('base64')}`;
   }
 
+  // Fundo gerado por IA (só WE_CREATE). Se existir, vira o background com um
+  // overlay escuro para o texto ficar legível.
+  let bgDataUri: string | null = null;
+  if (job.artMode === 'WE_CREATE') {
+    const bg = await getOrCreateBackground(job);
+    if (bg) bgDataUri = `data:image/png;base64,${bg.toString('base64')}`;
+  }
+
   const p = spec.palette;
-  const isClean = spec.layout === 'clean';
+  const isClean = spec.layout === 'clean' && !bgDataUri;
+
+  const rootBackground = bgDataUri
+    ? `linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.72) 100%), url(${bgDataUri})`
+    : isClean
+      ? p.bg
+      : `linear-gradient(160deg, ${p.bgAccent} 0%, ${p.bg} 70%)`;
+
+  // Sobre imagem IA, texto sempre branco.
+  const text = bgDataUri ? '#FFFFFF' : p.text;
+  const textMuted = bgDataUri ? 'rgba(255,255,255,0.85)' : p.textMuted;
 
   return new ImageResponse(
     (
@@ -56,15 +75,17 @@ export async function GET(
           flexDirection: 'column',
           width: '100%',
           height: '100%',
-          background: isClean ? p.bg : `linear-gradient(160deg, ${p.bgAccent} 0%, ${p.bg} 70%)`,
-          color: p.text,
+          backgroundImage: rootBackground,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          color: text,
           padding: '84px 64px',
           fontFamily: 'sans-serif',
         }}
       >
         {/* Top bar: brand + optional logo */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', fontSize: 34, fontWeight: 800, color: p.text }}>
+          <div style={{ display: 'flex', fontSize: 34, fontWeight: 800, color: text }}>
             cityjobs<span style={{ opacity: 0.55 }}>.sp</span>
           </div>
           {logoDataUri && (
@@ -106,13 +127,13 @@ export async function GET(
         </div>
 
         {/* Company */}
-        <div style={{ display: 'flex', marginTop: 22, fontSize: 46, fontWeight: 500, color: p.textMuted }}>
+        <div style={{ display: 'flex', marginTop: 22, fontSize: 46, fontWeight: 500, color: textMuted }}>
           {spec.company}
         </div>
 
         {/* Bottom block */}
         <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', gap: 26 }}>
-          <div style={{ display: 'flex', fontSize: 40, color: p.textMuted }}>📍 {spec.location}</div>
+          <div style={{ display: 'flex', fontSize: 40, color: textMuted }}>📍 {spec.location}</div>
 
           {/* Salary highlight */}
           <div
@@ -137,7 +158,7 @@ export async function GET(
               justifyContent: 'center',
               marginTop: 8,
               border: `3px solid ${isClean ? p.accent : 'rgba(255,255,255,0.85)'}`,
-              color: p.text,
+              color: text,
               borderRadius: 20,
               padding: '26px 40px',
               fontSize: 42,
