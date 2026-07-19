@@ -1,14 +1,16 @@
 import logger from './logger';
 
 /**
- * Publicação de Stories via API oficial da Meta (Instagram Content Publishing).
- * Fluxo: cria um container (media_type=STORIES, image_url) → aguarda ficar
- * pronto → publica. Cada região usa suas próprias credenciais.
+ * Publicação de Stories via API oficial da Meta.
+ * Usa a "Instagram API with Instagram Login" (graph.instagram.com), que publica
+ * Stories e NÃO exige página do Facebook. Permissão: instagram_business_content_publish.
+ * Fluxo (3 passos): cria container (media_type=STORIES, image_url) → aguarda
+ * FINISHED → publica. Cada região usa suas próprias credenciais.
  *
- * Docs: https://developers.facebook.com/docs/instagram-platform/content-publishing/
+ * Docs: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/
  */
 
-const GRAPH = 'https://graph.facebook.com/v20.0';
+const GRAPH = 'https://graph.instagram.com/v20.0';
 
 export interface IgCredentials {
   igUserId: string;
@@ -92,5 +94,18 @@ export async function checkIgCredentials(creds: IgCredentials): Promise<{ ok: bo
     return { ok: true, username: me.username };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'erro' };
+  }
+}
+
+/**
+ * Descobre o Instagram User ID a partir do token (graph.instagram.com/me).
+ * Assim o operador precisa colar só o token; o ID é resolvido sozinho.
+ */
+export async function resolveIgUserId(accessToken: string): Promise<string | null> {
+  try {
+    const me = await graphGet('me', { fields: 'user_id,username', access_token: accessToken });
+    return (me.user_id || me.id) ? String(me.user_id || me.id) : null;
+  } catch {
+    return null;
   }
 }

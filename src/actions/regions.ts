@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/adminAuth';
-import { checkIgCredentials } from '@/lib/instagram';
+import { checkIgCredentials, resolveIgUserId } from '@/lib/instagram';
 
 export interface RegionFormState {
   ok?: boolean;
@@ -45,12 +45,18 @@ export async function updateRegion(
   });
   const token = d.igAccessToken ? d.igAccessToken : (current?.igAccessToken ?? null);
 
+  // Se não informou o ID mas temos token, resolve o Instagram User ID sozinho.
+  let userId = d.igUserId || null;
+  if (!userId && token) {
+    userId = await resolveIgUserId(token);
+  }
+
   await prisma.region.update({
     where: { id: d.regionId },
     data: {
       name: d.name,
       instagramHandle: d.instagramHandle,
-      igUserId: d.igUserId || null,
+      igUserId: userId,
       igAccessToken: token,
       active: d.active,
     },
@@ -60,12 +66,15 @@ export async function updateRegion(
   revalidatePath('/admin/agenda');
 
   // Valida as credenciais (sem publicar nada) para dar feedback imediato.
-  if (d.igUserId && token) {
-    const check = await checkIgCredentials({ igUserId: d.igUserId, igAccessToken: token });
+  if (userId && token) {
+    const check = await checkIgCredentials({ igUserId: userId, igAccessToken: token });
     if (check.ok) {
-      return { ok: true, message: `Salvo ✓ Conectado ao Instagram: @${check.username}` };
+      return { ok: true, message: `Salvo ✓ Conectado ao Instagram: @${check.username} (ID ${userId})` };
     }
     return { ok: false, message: `Salvo, mas as credenciais falharam: ${check.error}` };
+  }
+  if (token && !userId) {
+    return { ok: false, message: 'Salvo o token, mas não consegui descobrir o ID da conta. Preencha o ID manualmente.' };
   }
 
   return { ok: true, message: 'Salvo. (Sem credenciais do Instagram — publicação manual.)' };
