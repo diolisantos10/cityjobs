@@ -52,6 +52,24 @@ enum AssetKind {
   LOGO // logo do cliente (para o agente de design usar)
 }
 
+// Região = eixo de segmentação (cada região tem seu Instagram). O site é único
+// e roteia cada vaga para a região correta; a auto-publicação usa as credenciais
+// da própria região.
+model Region {
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  instagramHandle String
+  // Credenciais da API oficial da Meta (por região). Preenchidas no /admin.
+  igUserId        String?
+  igAccessToken   String?
+  active          Boolean   @default(true)
+  isDefault       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  jobPosts        JobPost[]
+}
+
 model Company {
   id          String    @id @default(cuid())
   name        String
@@ -68,6 +86,8 @@ model JobPost {
   id                  String            @id @default(cuid())
   companyId           String?
   company             Company?          @relation(fields: [companyId], references: [id])
+  regionId            String?
+  region              Region?           @relation(fields: [regionId], references: [id])
   companyName         String
   cnpj                String?
   roleTitle           String

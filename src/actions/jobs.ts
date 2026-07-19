@@ -16,6 +16,7 @@ import { analyzeTrust } from '@/lib/trust';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { artPriceForCount } from '@/lib/artPricing';
 import { fromDatetimeLocalBRT } from '@/lib/publishing';
+import { getDefaultRegion } from '@/lib/regions';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp'];
@@ -104,10 +105,12 @@ export async function createJobPost(
 
   const companyId = await findOrCreateCompany({ name: data.companyName, cnpj: data.cnpj || null });
   const trust = analyzeTrust(data);
+  const region = await getDefaultRegion();
 
   const job = await prisma.jobPost.create({
     data: {
       companyId,
+      regionId: region?.id ?? null,
       companyName: data.companyName,
       cnpj: data.cnpj || null,
       roleTitle: data.roleTitle,

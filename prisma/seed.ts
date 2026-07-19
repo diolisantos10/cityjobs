@@ -29,6 +29,19 @@ const ART_PRICE_DEFAULTS = [
 ];
 
 async function main() {
+  await prisma.region.upsert({
+    where: { slug: 'sp' },
+    update: {},
+    create: {
+      name: 'São Paulo e Grande São Paulo',
+      slug: 'sp',
+      instagramHandle: '@cityjobs.sp',
+      active: true,
+      isDefault: true,
+    },
+  });
+  console.log('Region seeded: São Paulo e Grande São Paulo (@cityjobs.sp)');
+
   for (const plan of PLAN_DEFAULTS) {
     await prisma.planConfig.upsert({
       where: { days: plan.days },
