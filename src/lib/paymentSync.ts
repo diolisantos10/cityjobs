@@ -26,10 +26,11 @@ export async function applyPaymentToJob(params: {
   // Don't move a job backwards once it's paid or already in the pipeline.
   const alreadyProcessed = ['PAID', 'IN_REVIEW', 'APPROVED', 'PUBLISHED'].includes(job.status);
 
-  // Auto-aprova vagas limpas (sem sinais de risco) → publicação automática.
-  // Vagas com flags de risco ficam em PAID aguardando revisão humana.
+  // Auto-aprova apenas vagas bem limpas (risco <= 1, ex: só "sem CNPJ") →
+  // publicação automática. Qualquer sinal de risco (warning/high) fica em PAID
+  // para revisão humana — proteção da marca no lançamento. Limiar ajustável.
   const riskScore = (job.trustFlags as { score?: number } | null)?.score ?? 0;
-  const newStatus = riskScore <= 3 ? 'APPROVED' : 'PAID';
+  const newStatus = riskScore <= 1 ? 'APPROVED' : 'PAID';
 
   await prisma.jobPost.update({
     where: { id: params.jobId },
