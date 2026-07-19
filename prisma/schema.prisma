@@ -96,6 +96,10 @@ model JobPost {
   designBrief         Json?             // anamnese: { useLogo, style, colors, notes }
   assets              Asset[]
 
+  // Agenda de publicação
+  scheduledFor        DateTime?
+  publishedAt         DateTime?
+
   // Mercado Pago (Checkout Transparente) tracking
   mpPaymentId         String?           @unique
   mpStatus            String?           // approved | pending | in_process | rejected | ...

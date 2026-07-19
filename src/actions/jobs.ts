@@ -15,6 +15,7 @@ import { findOrCreateCompany } from '@/lib/company';
 import { analyzeTrust } from '@/lib/trust';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { artPriceForCount } from '@/lib/artPricing';
+import { fromDatetimeLocalBRT } from '@/lib/publishing';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp'];
@@ -142,6 +143,29 @@ export async function createJobPost(
   if (assets.length) await prisma.asset.createMany({ data: assets });
 
   redirect(`/vagas/${job.id}/confirmacao`);
+}
+
+export async function updateSchedule(formData: FormData): Promise<void> {
+  requireAdmin();
+  const jobId = String(formData.get('jobId') ?? '');
+  const when = fromDatetimeLocalBRT(String(formData.get('scheduledFor') ?? ''));
+  if (!jobId) throw new Error('jobId ausente');
+  await prisma.jobPost.update({ where: { id: jobId }, data: { scheduledFor: when } });
+  revalidatePath('/admin/agenda');
+  revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+export async function markPublished(formData: FormData): Promise<void> {
+  requireAdmin();
+  const jobId = String(formData.get('jobId') ?? '');
+  if (!jobId) throw new Error('jobId ausente');
+  await prisma.jobPost.update({
+    where: { id: jobId },
+    data: { status: 'PUBLISHED', publishedAt: new Date() },
+  });
+  revalidatePath('/admin/agenda');
+  revalidatePath('/admin');
+  revalidatePath(`/admin/jobs/${jobId}`);
 }
 
 export async function updateJobStatus(formData: FormData): Promise<void> {

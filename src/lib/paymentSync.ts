@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { nextPeakSlot } from './publishing';
 
 /**
  * Applies a Mercado Pago payment outcome to a JobPost.
@@ -32,7 +33,12 @@ export async function applyPaymentToJob(params: {
       mpStatus: params.status,
       mpStatusDetail: params.statusDetail,
       ...(approved && !alreadyProcessed
-        ? { status: 'PAID', paidAt: new Date() }
+        ? {
+            status: 'PAID',
+            paidAt: new Date(),
+            // Sugere um horário de pico assim que o pagamento entra.
+            ...(job.scheduledFor ? {} : { scheduledFor: nextPeakSlot() }),
+          }
         : {}),
     },
   });
