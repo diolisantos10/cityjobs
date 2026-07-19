@@ -17,6 +17,8 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { artPriceForCount } from '@/lib/artPricing';
 import { fromDatetimeLocalBRT } from '@/lib/publishing';
 import { getDefaultRegion } from '@/lib/regions';
+import { publishDueJobs } from '@/lib/autoPublish';
+import { headers } from 'next/headers';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp'];
@@ -169,6 +171,17 @@ export async function markPublished(formData: FormData): Promise<void> {
   revalidatePath('/admin/agenda');
   revalidatePath('/admin');
   revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+export async function publishDueNow(): Promise<void> {
+  requireAdmin();
+  const h = headers();
+  const proto = h.get('x-forwarded-proto') ?? 'https';
+  const host = h.get('host') ?? '';
+  const origin = process.env.APP_URL || `${proto}://${host}`;
+  await publishDueJobs(origin);
+  revalidatePath('/admin/agenda');
+  revalidatePath('/admin');
 }
 
 export async function updateJobStatus(formData: FormData): Promise<void> {

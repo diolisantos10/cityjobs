@@ -26,6 +26,11 @@ export async function applyPaymentToJob(params: {
   // Don't move a job backwards once it's paid or already in the pipeline.
   const alreadyProcessed = ['PAID', 'IN_REVIEW', 'APPROVED', 'PUBLISHED'].includes(job.status);
 
+  // Auto-aprova vagas limpas (sem sinais de risco) → publicação automática.
+  // Vagas com flags de risco ficam em PAID aguardando revisão humana.
+  const riskScore = (job.trustFlags as { score?: number } | null)?.score ?? 0;
+  const newStatus = riskScore <= 3 ? 'APPROVED' : 'PAID';
+
   await prisma.jobPost.update({
     where: { id: params.jobId },
     data: {
@@ -34,7 +39,7 @@ export async function applyPaymentToJob(params: {
       mpStatusDetail: params.statusDetail,
       ...(approved && !alreadyProcessed
         ? {
-            status: 'PAID',
+            status: newStatus,
             paidAt: new Date(),
             // Sugere um horário de pico assim que o pagamento entra.
             ...(job.scheduledFor ? {} : { scheduledFor: nextPeakSlot() }),

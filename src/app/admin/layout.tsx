@@ -37,6 +37,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/agenda" className="text-brand-700 hover:underline">
             Agenda
           </Link>
+          <Link href="/admin/regioes" className="text-brand-700 hover:underline">
+            Regiões
+          </Link>
           <Link href="/admin/plans" className="text-brand-700 hover:underline">
             Planos
           </Link>

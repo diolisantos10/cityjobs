@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { JobStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { updateSchedule, markPublished } from '@/actions/jobs';
+import { updateSchedule, markPublished, publishDueNow } from '@/actions/jobs';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CopyButton } from '@/components/CopyButton';
 import { jobArtUrl, toDatetimeLocalBRT } from '@/lib/publishing';
@@ -23,11 +23,21 @@ export default async function AdminAgendaPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold tracking-tight">Central de publicação</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Vagas pagas prontas pra ir ao ar. Arte + copy prontos — publique no story do CityJobs e
-        marque como publicada. Horários de pico sugeridos: 8h, 12h e 18h.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Central de publicação</h1>
+          <p className="mt-2 max-w-2xl text-sm text-gray-600">
+            Vagas aprovadas com credenciais da região configuradas são publicadas
+            automaticamente no horário agendado. As demais ficam aqui com arte + copy prontos pra
+            publicação manual. Picos: 8h, 12h e 18h.
+          </p>
+        </div>
+        <form action={publishDueNow}>
+          <button type="submit" className="btn-primary text-sm">
+            ⚡ Publicar agendados agora
+          </button>
+        </form>
+      </div>
 
       {jobs.length === 0 ? (
         <p className="mt-8 text-gray-500">Nenhuma vaga na fila. 🎉</p>
