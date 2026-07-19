@@ -24,6 +24,21 @@ export function igConfigured(region: {
   return Boolean(region.igUserId && region.igAccessToken);
 }
 
+/**
+ * Resolve as credenciais de uma região: usa as do banco (por região) e, se
+ * vazias, cai para as variáveis de ambiente globais (IG_USER_ID / IG_ACCESS_TOKEN)
+ * — útil para a região padrão sem precisar escrever no banco.
+ */
+export function resolveIgCreds(region: {
+  igUserId: string | null;
+  igAccessToken: string | null;
+}): IgCredentials | null {
+  const igUserId = region.igUserId || process.env.IG_USER_ID || null;
+  const igAccessToken = region.igAccessToken || process.env.IG_ACCESS_TOKEN || null;
+  if (igUserId && igAccessToken) return { igUserId, igAccessToken };
+  return null;
+}
+
 async function graphPost(path: string, params: Record<string, string>): Promise<any> {
   const url = new URL(`${GRAPH}/${path}`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));

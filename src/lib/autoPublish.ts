@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { igConfigured, publishStory } from './instagram';
+import { resolveIgCreds, publishStory } from './instagram';
 import logger from './logger';
 
 export interface PublishRunResult {
@@ -31,16 +31,14 @@ export async function publishDueJobs(origin: string, now = new Date()): Promise<
   const result: PublishRunResult = { published: [], skippedNoCreds: [], failed: [], eligible: jobs.length };
 
   for (const job of jobs) {
-    if (!job.region || !igConfigured(job.region)) {
+    const creds = job.region ? resolveIgCreds(job.region) : resolveIgCreds({ igUserId: null, igAccessToken: null });
+    if (!creds) {
       result.skippedNoCreds.push(job.id);
       continue;
     }
     try {
       const imageUrl = `${origin}/api/publish-image/${job.id}`;
-      await publishStory(
-        { igUserId: job.region.igUserId, igAccessToken: job.region.igAccessToken },
-        imageUrl
-      );
+      await publishStory(creds, imageUrl);
       await prisma.jobPost.update({
         where: { id: job.id },
         data: { status: 'PUBLISHED', publishedAt: new Date() },
