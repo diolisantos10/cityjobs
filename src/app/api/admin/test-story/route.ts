@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getDefaultRegion } from '@/lib/regions';
 import { resolveIgCreds, publishStory } from '@/lib/instagram';
+import { getOrCreateBackground } from '@/lib/artBackground';
 import { generateStoryCopy } from '@/lib/storyCopy';
 
 export const runtime = 'nodejs';
@@ -57,6 +58,8 @@ export async function POST(req: Request) {
   const origin = process.env.APP_URL || new URL(req.url).origin;
 
   try {
+    // Pré-gera o fundo IA antes da Meta buscar (evita timeout no render frio).
+    await getOrCreateBackground({ ...job, assets: [] }).catch(() => null);
     const mediaId = await publishStory(creds, `${origin}/api/publish-image/${job.id}`);
     await prisma.jobPost.update({
       where: { id: job.id },

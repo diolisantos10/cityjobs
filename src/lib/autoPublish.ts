@@ -1,6 +1,20 @@
 import { prisma } from './prisma';
 import { resolveIgCreds, publishStory } from './instagram';
+import { getOrCreateBackground } from './artBackground';
 import logger from './logger';
+
+/**
+ * Pré-gera o fundo IA (WE_CREATE) e cacheia como Asset ANTES de mandar a Meta
+ * buscar a imagem. Sem isso, o 1º acesso ao /api/publish-image dispara a geração
+ * OpenAI (~20s) durante o fetch da Meta, que dá timeout e recusa a mídia
+ * ("Only photo or video can be accepted as media type").
+ */
+async function warmStoryImage(jobId: string): Promise<void> {
+  const job = await prisma.jobPost.findUnique({ where: { id: jobId }, include: { assets: true } });
+  if (job?.artMode === 'WE_CREATE') {
+    await getOrCreateBackground(job).catch(() => null);
+  }
+}
 
 export interface PublishRunResult {
   published: string[];
@@ -37,6 +51,7 @@ export async function publishDueJobs(origin: string, now = new Date()): Promise<
       continue;
     }
     try {
+      await warmStoryImage(job.id); // gera/cacheia o fundo IA antes da Meta buscar
       const imageUrl = `${origin}/api/publish-image/${job.id}`;
       await publishStory(creds, imageUrl);
       await prisma.jobPost.update({
