@@ -6,6 +6,8 @@ import { updateJobStatus, updateModerationNotes } from '@/actions/jobs';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TrustFlagsPanel } from '@/components/TrustFlagsPanel';
 import { EditJobForm } from '@/components/EditJobForm';
+import { WhatsAppShare } from '@/components/WhatsAppShare';
+import { generateGroupMessage } from '@/lib/whatsappGroups';
 import {
   formatDate,
   formatPrice,
@@ -40,6 +42,7 @@ export default async function AdminJobDetail({ params }: { params: { id: string 
     | null;
   const artAsset = job.assets.find((a) => a.kind === 'ART');
   const logoAsset = job.assets.find((a) => a.kind === 'LOGO');
+  const groupShare = generateGroupMessage(job);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -133,6 +136,9 @@ export default async function AdminJobDetail({ params }: { params: { id: string 
           <p className="mt-2 text-sm text-gray-500">Nenhuma copy gerada.</p>
         )}
       </div>
+
+      {/* Mensagem pronta pro grupo do WhatsApp */}
+      <WhatsAppShare groupName={groupShare.group.name} message={groupShare.message} />
 
       {/* Arte do Story (escolha do cliente) */}
       <div className="card mt-4">
