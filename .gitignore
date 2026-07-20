@@ -22,3 +22,4 @@ prisma/*.db
 
 # local dev postgres
 .localpg/
+tsconfig.tsbuildinfo
