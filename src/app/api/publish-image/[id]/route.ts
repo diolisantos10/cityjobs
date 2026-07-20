@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { prisma } from '@/lib/prisma';
-import { jobArtUrl } from '@/lib/publishing';
+import { buildStoryImageResponse } from '@/lib/renderDesign';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,10 +23,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   if (job.artMode === 'SELF_UPLOAD' && artAsset) {
     source = Buffer.from(artAsset.data);
   } else {
-    const origin = new URL(req.url).origin;
-    const res = await fetch(`${origin}${jobArtUrl(job, job.assets)}`);
-    if (!res.ok) return new Response('Falha ao gerar arte', { status: 502 });
-    source = Buffer.from(await res.arrayBuffer());
+    // Renderiza a arte do agente direto (sem fetch HTTP interno — que falha por
+    // SSL quando o container chama a própria URL pública no Railway).
+    const img = await buildStoryImageResponse(job, 1);
+    source = Buffer.from(await img.arrayBuffer());
   }
 
   const jpeg = await sharp(source)
