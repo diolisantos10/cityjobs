@@ -12,7 +12,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
-    "test": "node --import tsx --test test/storyCopy.test.ts test/validation.test.ts test/trust.test.ts",
+    "test": "node --import tsx --test test/storyCopy.test.ts test/validation.test.ts test/trust.test.ts test/whatsappGroups.test.ts",
     "test:integration": "node --import tsx --test test/integration.db.test.ts"
   },
   "prisma": {

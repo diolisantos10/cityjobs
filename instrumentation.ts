@@ -25,11 +25,27 @@ export async function register() {
     }
   };
 
+  // Renova os tokens do Instagram 1x/dia (estende +60 dias — "paga e esquece").
+  const refreshTokens = async () => {
+    try {
+      const { refreshRegionTokens } = await import('./src/lib/tokenRefresh');
+      await refreshRegionTokens();
+    } catch (err) {
+      console.error('[scheduler] erro ao renovar tokens:', err instanceof Error ? err.message : err);
+    }
+  };
+
   // Primeira execução após 60s (dá tempo do app subir), depois a cada 5 min.
   setTimeout(() => {
     tick();
     setInterval(tick, INTERVAL_MS);
   }, 60 * 1000);
 
-  console.log('[scheduler] auto-publicação in-process iniciada (5 min).');
+  // Renova tokens 5 min após subir e depois a cada 24h.
+  setTimeout(() => {
+    refreshTokens();
+    setInterval(refreshTokens, 24 * 60 * 60 * 1000);
+  }, 5 * 60 * 1000);
+
+  console.log('[scheduler] auto-publicação (5 min) + renovação de token (24h) iniciadas.');
 }

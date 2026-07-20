@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import type { JobStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { updateSchedule, markPublished, publishDueNow } from '@/actions/jobs';
+import { updateSchedule, markPublished, publishDueNow, autoScheduleQueue } from '@/actions/jobs';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CopyButton } from '@/components/CopyButton';
 import { jobArtUrl, toDatetimeLocalBRT } from '@/lib/publishing';
+import { generateGroupMessage } from '@/lib/whatsappGroups';
 import { formatDate, NICHE_LABELS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
@@ -32,11 +33,18 @@ export default async function AdminAgendaPage() {
             publicação manual. Picos: 8h, 12h e 18h.
           </p>
         </div>
-        <form action={publishDueNow}>
-          <button type="submit" className="btn-primary text-sm">
-            ⚡ Publicar agendados agora
-          </button>
-        </form>
+        <div className="flex flex-wrap gap-2">
+          <form action={autoScheduleQueue}>
+            <button type="submit" className="btn-secondary text-sm">
+              📅 Agendar fila nos picos
+            </button>
+          </form>
+          <form action={publishDueNow}>
+            <button type="submit" className="btn-primary text-sm">
+              ⚡ Publicar agendados agora
+            </button>
+          </form>
+        </div>
       </div>
 
       {jobs.length === 0 ? (
@@ -45,6 +53,7 @@ export default async function AdminAgendaPage() {
         <div className="mt-6 space-y-5">
           {jobs.map((job) => {
             const artUrl = jobArtUrl(job, job.assets);
+            const groupShare = generateGroupMessage(job);
             return (
               <div key={job.id} className="card flex flex-col gap-4 sm:flex-row">
                 {/* Arte */}
@@ -94,6 +103,19 @@ export default async function AdminAgendaPage() {
                       </pre>
                     </div>
                   )}
+
+                  {/* WhatsApp: grupo certo + mensagem pronta */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-500">
+                        WhatsApp → <span className="text-green-700">{groupShare.group.name}</span>
+                      </span>
+                      <CopyButton text={groupShare.message} label="Copiar p/ grupo" />
+                    </div>
+                    <pre className="mt-1 whitespace-pre-wrap rounded-lg bg-green-50 p-3 font-sans text-xs leading-relaxed text-gray-700">
+                      {groupShare.message}
+                    </pre>
+                  </div>
 
                   {/* Agenda + publicar */}
                   <div className="mt-3 flex flex-wrap items-end gap-3">

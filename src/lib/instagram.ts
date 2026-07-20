@@ -113,6 +113,29 @@ export async function checkIgCredentials(creds: IgCredentials): Promise<{ ok: bo
 }
 
 /**
+ * Renova um token longo do Instagram (ig_refresh_token), estendendo por +60 dias.
+ * Só funciona com token de longa duração com pelo menos 24h de vida. Retorna o
+ * novo token + validade em segundos, ou null se falhar (token curto/inválido).
+ */
+export async function refreshLongLivedToken(
+  accessToken: string
+): Promise<{ accessToken: string; expiresIn: number } | null> {
+  try {
+    const json = await graphGet('refresh_access_token', {
+      grant_type: 'ig_refresh_token',
+      access_token: accessToken,
+    });
+    if (json.access_token) {
+      return { accessToken: json.access_token as string, expiresIn: Number(json.expires_in) || 0 };
+    }
+    return null;
+  } catch (err) {
+    logger.warn(`[instagram] refresh de token falhou: ${err instanceof Error ? err.message : err}`);
+    return null;
+  }
+}
+
+/**
  * Descobre o Instagram User ID a partir do token (graph.instagram.com/me).
  * Assim o operador precisa colar só o token; o ID é resolvido sozinho.
  */

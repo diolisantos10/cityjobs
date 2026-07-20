@@ -23,6 +23,18 @@ export function nextPeakSlot(from: Date = new Date()): Date {
   return t;
 }
 
+/** Gera os próximos `count` horários de pico (UTC), um por slot, sem repetir. */
+export function upcomingPeakSlots(count: number, from: Date = new Date()): Date[] {
+  const slots: Date[] = [];
+  let cursor = from;
+  for (let i = 0; i < count; i++) {
+    const slot = nextPeakSlot(cursor);
+    slots.push(slot);
+    cursor = new Date(slot.getTime() + 60 * 1000); // 1 min após o slot p/ pegar o próximo
+  }
+  return slots;
+}
+
 /**
  * Resolve a URL da arte final de uma vaga para publicação:
  * - WE_CREATE  → arte gerada pelo agente (variação 1)

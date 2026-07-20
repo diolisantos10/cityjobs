@@ -15,7 +15,7 @@ import { findOrCreateCompany } from '@/lib/company';
 import { analyzeTrust } from '@/lib/trust';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { artPriceForCount } from '@/lib/artPricing';
-import { fromDatetimeLocalBRT } from '@/lib/publishing';
+import { fromDatetimeLocalBRT, upcomingPeakSlots } from '@/lib/publishing';
 import { getDefaultRegion } from '@/lib/regions';
 import { publishDueJobs } from '@/lib/autoPublish';
 import { headers } from 'next/headers';
@@ -171,6 +171,30 @@ export async function markPublished(formData: FormData): Promise<void> {
   revalidatePath('/admin/agenda');
   revalidatePath('/admin');
   revalidatePath(`/admin/jobs/${jobId}`);
+}
+
+/**
+ * Distribui as vagas da fila SEM horário nos próximos horários de pico (8h/12h/18h),
+ * uma por slot, para manter ritmo diário sem amontoar posts. Só mexe em quem ainda
+ * não tem `scheduledFor`.
+ */
+export async function autoScheduleQueue(): Promise<void> {
+  requireAdmin();
+  const pending = await prisma.jobPost.findMany({
+    where: { status: { in: ['PAID', 'IN_REVIEW', 'APPROVED'] }, scheduledFor: null, publishedAt: null },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  });
+  if (pending.length === 0) return;
+
+  const slots = upcomingPeakSlots(pending.length);
+  await prisma.$transaction(
+    pending.map((job, i) =>
+      prisma.jobPost.update({ where: { id: job.id }, data: { scheduledFor: slots[i] } })
+    )
+  );
+  revalidatePath('/admin/agenda');
+  revalidatePath('/admin');
 }
 
 export async function publishDueNow(): Promise<void> {

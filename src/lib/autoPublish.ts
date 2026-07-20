@@ -9,6 +9,21 @@ import logger from './logger';
  * OpenAI (~20s) durante o fetch da Meta, que dá timeout e recusa a mídia
  * ("Only photo or video can be accepted as media type").
  */
+/** Conta Stories publicados por conta (igUserId) desde `since`, para o teto diário. */
+async function countPublishedByAccount(since: Date): Promise<Map<string, number>> {
+  const recent = await prisma.jobPost.findMany({
+    where: { status: 'PUBLISHED', publishedAt: { gte: since } },
+    select: { region: { select: { igUserId: true, igAccessToken: true } } },
+  });
+  const counts = new Map<string, number>();
+  for (const j of recent) {
+    const creds = resolveIgCreds(j.region ?? { igUserId: null, igAccessToken: null });
+    if (!creds) continue;
+    counts.set(creds.igUserId, (counts.get(creds.igUserId) ?? 0) + 1);
+  }
+  return counts;
+}
+
 async function warmStoryImage(jobId: string): Promise<void> {
   const job = await prisma.jobPost.findUnique({ where: { id: jobId }, include: { assets: true } });
   if (job?.artMode === 'WE_CREATE') {
@@ -19,9 +34,16 @@ async function warmStoryImage(jobId: string): Promise<void> {
 export interface PublishRunResult {
   published: string[];
   skippedNoCreds: string[];
+  skippedDailyCap: string[];
   failed: { id: string; error: string }[];
   eligible: number;
 }
+
+/**
+ * Teto de Stories por conta a cada 24h. A API de conteúdo da Meta permite ~25
+ * posts/24h; mantemos folga e evitamos parecer spam na fase de aquecimento.
+ */
+const DAILY_CAP_PER_ACCOUNT = 18;
 
 /**
  * Publica automaticamente as vagas APROVADAS cujo horário agendado já chegou,
@@ -42,12 +64,28 @@ export async function publishDueJobs(origin: string, now = new Date()): Promise<
     take: 20, // respeita folga do limite da Meta (~25/dia)
   });
 
-  const result: PublishRunResult = { published: [], skippedNoCreds: [], failed: [], eligible: jobs.length };
+  const result: PublishRunResult = {
+    published: [],
+    skippedNoCreds: [],
+    skippedDailyCap: [],
+    failed: [],
+    eligible: jobs.length,
+  };
+
+  // Quantos Stories cada conta (igUserId) já publicou nas últimas 24h.
+  const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const publishedToday = await countPublishedByAccount(since);
 
   for (const job of jobs) {
     const creds = job.region ? resolveIgCreds(job.region) : resolveIgCreds({ igUserId: null, igAccessToken: null });
     if (!creds) {
       result.skippedNoCreds.push(job.id);
+      continue;
+    }
+    // Respeita o teto diário por conta.
+    const count = publishedToday.get(creds.igUserId) ?? 0;
+    if (count >= DAILY_CAP_PER_ACCOUNT) {
+      result.skippedDailyCap.push(job.id);
       continue;
     }
     try {
@@ -58,6 +96,7 @@ export async function publishDueJobs(origin: string, now = new Date()): Promise<
         where: { id: job.id },
         data: { status: 'PUBLISHED', publishedAt: new Date() },
       });
+      publishedToday.set(creds.igUserId, count + 1); // atualiza o teto no mesmo run
       result.published.push(job.id);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'erro';
@@ -66,9 +105,9 @@ export async function publishDueJobs(origin: string, now = new Date()): Promise<
     }
   }
 
-  if (result.published.length || result.failed.length) {
+  if (result.published.length || result.failed.length || result.skippedDailyCap.length) {
     logger.info(
-      `[autoPublish] publicadas=${result.published.length} falhas=${result.failed.length} sem_creds=${result.skippedNoCreds.length}`
+      `[autoPublish] publicadas=${result.published.length} falhas=${result.failed.length} sem_creds=${result.skippedNoCreds.length} teto_diario=${result.skippedDailyCap.length}`
     );
   }
   return result;
