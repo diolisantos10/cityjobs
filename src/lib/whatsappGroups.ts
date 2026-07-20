@@ -145,7 +145,7 @@ export function generateGroupMessage(job: MessageJob): GroupMessage {
     '',
     `${group.hashtag} ${cityTag} ${roleTag}`,
     '',
-    '📲 Mais vagas todo dia aqui no grupo — chama a galera!',
+    '📲 Vagas novas todo dia. Ative as notificações e fique de olho!',
   ];
 
   return { group, message: lines.join('\n') };
